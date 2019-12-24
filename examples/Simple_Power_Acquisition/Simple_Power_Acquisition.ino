@@ -11,6 +11,7 @@
 #include <Hoomaluo_ADE9000.h>
 #include <stdint.h>
 #include <math.h>
+#include <float.h>
 
 //**********PIN DEFINITIONS************
 
@@ -59,7 +60,7 @@ void loop() {
       //SAMPLE STRING vrms_cal?irms_cal?watt_cal?calibrate
       //replace calibration values with numbers separated by ?
       char linebuf[100];
-      char *one, *two;
+      char *one;
       line.toCharArray(linebuf, 100);
       one = strtok(linebuf, "?");
       vrms_cal = atof(one);
@@ -97,7 +98,7 @@ void loop() {
       airms = airmsaccum/dccount;
       awatt = awattaccum/dccount;
       ava = avaaccum/dccount;
-      if(ava !=0) apf = awatt/ava;
+      apf = (ava !=0) ? (awatt/ava) : (DBL_MAX);
       avar = sqrt(ava*ava - awatt*awatt);
 
       //*********ACQUIRE AC POWER DATA PHASE B******************
@@ -106,7 +107,8 @@ void loop() {
       birms =     birmsaccum/dccount;
       bwatt =     bwattaccum/dccount;
       bva =       bvaaccum/dccount;
-      if(bva !=0) bpf = bwatt/bva;
+      bpf = (bva !=0) ? (bwatt/bva) : (DBL_MAX);
+      bvar = sqrt(bva*bva - bwatt*bwatt);
 
       //*********ACQUIRE AC POWER DATA PHASE C******************
       double cvrms,cirms,cwatt,cpf,cvar,cva;
@@ -114,9 +116,9 @@ void loop() {
       cirms =     cirmsaccum/dccount;
       cwatt =     cwattaccum/dccount;
       cva =       cvaaccum/dccount;
-      if(cva !=0) cpf = cwatt/cva;
+      cpf = (cva !=0) ? (cwatt/cva) : (DBL_MAX);
       cvar = sqrt(cva*cva - cwatt*cwatt);
-  
+
         //**************SEND SERIAL DATA**************************
       String senddata = "{\"awatt\":";
       senddata += awatt;
@@ -124,6 +126,8 @@ void loop() {
       senddata += ava;
       senddata += ",\"apf\":";
       senddata += apf;
+      senddata += ",\"avar\":";
+      senddata += avar;
       senddata += ",\"avrms\":";
       senddata += avrms;
       senddata += ",\"airms\":";
@@ -134,6 +138,8 @@ void loop() {
       senddata += bva;
       senddata += ",\"bpf\":";
       senddata += bpf;
+      senddata += ",\"bvar\":";
+      senddata += bvar;
       senddata += ",\"bvrms\":";
       senddata += bvrms;
       senddata += ",\"birms\":";
@@ -144,6 +150,8 @@ void loop() {
       senddata += cva;
       senddata += ",\"cpf\":";
       senddata += cpf;
+      senddata += ",\"cvar\":";
+      senddata += cvar;
       senddata += ",\"cvrms\":";
       senddata += cvrms;
       senddata += ",\"cirms\":";
@@ -159,7 +167,7 @@ void loop() {
       airmsaccum =    0;
       awattaccum =    0;
       avaaccum =      0;
-      
+
       bvrmsaccum =    0;
       birmsaccum =    0;
       bwattaccum =    0;
@@ -172,8 +180,6 @@ void loop() {
   }
   dccount++;    //advance counter for accumulator reconciliation
 }
-
-
 
 
 void init_ADE_regs()
@@ -195,6 +201,3 @@ void init_ADE_regs()
   delay(500);
   ade9000.SPI_Write_16(ADDR_RUN,VAL_RUN);
 }
-
-
-

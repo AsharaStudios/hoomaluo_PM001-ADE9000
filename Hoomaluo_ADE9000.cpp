@@ -1,5 +1,3 @@
-
-
 #include <Arduino.h>
 #include <SPI.h>
 #include "Hoomaluo_ADE9000.h"
@@ -11,7 +9,6 @@ uint32_t ADE9000_Eeprom_CalibrationRegAddress[CALIBRATION_CONSTANTS_ARRAY_SIZE]=
 
 ADE9000Class::ADE9000Class()
 {
-	
 }
 
 /* 
@@ -19,7 +16,6 @@ Description: Initializes the ADE9000. The initial settings for registers are def
 Input: Register settings in header files
 Output: 
 */
-
 void ADE9000Class::SetupADE9000(void)
 {
 	 SPI_Write_16(ADDR_PGA_GAIN,ADE9000_PGA_GAIN);     
@@ -46,7 +42,6 @@ Description: Initializes the arduino SPI port using SPI.h library
 Input: SPI speed, chip select pin
 Output:-
 */
-
 void ADE9000Class::SPI_Init(uint32_t SPI_speed , uint8_t chipSelect_Pin)
 {
 	SPI.begin();		//Initiate SPI port
@@ -62,16 +57,15 @@ Description: Writes 16bit data to a 16 bit register.
 Input: Register address, data
 Output:-
 */
-
 void ADE9000Class:: SPI_Write_16(uint16_t Address , uint16_t Data )
 {
 	uint16_t temp_address;
-	
+
 	digitalWrite(_chipSelect_Pin, LOW);
 	temp_address = ((Address << 4) & 0xFFF0);	//shift address  to align with cmd packet
 	SPI.transfer16(temp_address);
 	SPI.transfer16(Data);
-	
+
 	digitalWrite(_chipSelect_Pin, HIGH); 	
 }
 
@@ -80,7 +74,6 @@ Description: Writes 32bit data to a 32 bit register.
 Input: Register address, data
 Output:-
 */
-
 void ADE9000Class:: SPI_Write_32(uint16_t Address , uint32_t Data )
 {
 	uint16_t temp_address;
@@ -89,16 +82,16 @@ void ADE9000Class:: SPI_Write_32(uint16_t Address , uint32_t Data )
 
 	temp_highpacket= (Data & 0xFFFF0000)>>16;
 	temp_lowpacket= (Data & 0x0000FFFF);
-	
+
 	digitalWrite(_chipSelect_Pin, LOW);
-	
+
 	temp_address = ((Address << 4) & 0xFFF0);	//shift address  to align with cmd packet
 	SPI.transfer16(temp_address);
 	SPI.transfer16(temp_highpacket);
 	SPI.transfer16(temp_lowpacket);
-	
+
 	digitalWrite(_chipSelect_Pin, HIGH); 	
-	
+
 }
 
 /* 
@@ -106,18 +99,17 @@ Description: Reads 16bit data from register.
 Input: Register address
 Output: 16 bit data
 */
-
 uint16_t ADE9000Class:: SPI_Read_16(uint16_t Address)
 {
 	uint16_t temp_address;
 	uint16_t returnData;
-	
+
 	digitalWrite(_chipSelect_Pin, LOW);
-	
+
 	temp_address = (((Address << 4) & 0xFFF0)+8);
 	SPI.transfer16(temp_address);
 	returnData = SPI.transfer16(0);
-	
+
 	digitalWrite(_chipSelect_Pin, HIGH);
 	return returnData;
 }
@@ -127,46 +119,43 @@ Description: Reads 32bit data from register.
 Input: Register address
 Output: 32 bit data
 */
-
 uint32_t ADE9000Class:: SPI_Read_32(uint16_t Address)
 {
 	uint16_t temp_address;
 	uint16_t temp_highpacket;
 	uint16_t temp_lowpacket;
 	uint32_t returnData;
-	
+
 	digitalWrite(_chipSelect_Pin, LOW);
-	
+
 	temp_address = (((Address << 4) & 0xFFF0)+8);
 	SPI.transfer16(temp_address);
 	temp_highpacket = SPI.transfer16(0);
 	temp_lowpacket = SPI.transfer16(0);	
-	
+
 	digitalWrite(_chipSelect_Pin, HIGH);
-	
+
 	returnData = temp_highpacket << 16;
 	returnData = returnData + temp_lowpacket;
-	
+
 	return returnData;
 
 }
+
 /* 
 Description: Burst reads the content of waveform buffer. This function only works with resampled data. Configure waveform buffer to have Resampled data, and burst enabled (BURST_CHAN=0000 in WFB_CFG Register).
 Input: The starting address. Use the starting address of a data set. e.g 0x800, 0x804 etc to avoid data going into incorrect arrays. 
        Read_Element_Length is the number of data sets to read. If the starting address is 0x800, the maximum sets to read are 512.
 Output: Resampled data returned in structure
 */
-
 void ADE9000Class:: SPI_Burst_Read_Resampled_Wfb(uint16_t Address, uint16_t Read_Element_Length, ResampledWfbData *ResampledData)
 {
-	uint16_t temp;
 	uint16_t i;
- 
 
 	digitalWrite(_chipSelect_Pin, LOW);
-  
+
 	SPI.transfer16(((Address << 4) & 0xFFF0)+8);  //Send the starting address
- 
+
   //burst read the data upto Read_Length 
 	for(i=0;i<Read_Element_Length;i++) 
 		{
@@ -181,12 +170,11 @@ void ADE9000Class:: SPI_Burst_Read_Resampled_Wfb(uint16_t Address, uint16_t Read
 	digitalWrite(_chipSelect_Pin, HIGH);
 }
 
-/* 
+/*
 Description: Reads the Active power registers AWATT,BWATT and CWATT
 Input: Structure name
 Output: Active power codes stored in respective structure
 */
-
 void ADE9000Class:: ReadActivePowerRegs(ActivePowerRegs *Data)
 {
 	Data->ActivePowerReg_A = int32_t (SPI_Read_32(ADDR_AWATT));
@@ -221,7 +209,6 @@ void ADE9000Class:: ReadCurrentRMSRegs(CurrentRMSRegs *Data)
 	Data->CurrentRMSReg_B = int32_t (SPI_Read_32(ADDR_BIRMS));
 	Data->CurrentRMSReg_C = int32_t (SPI_Read_32(ADDR_CIRMS));
 	Data->CurrentRMSReg_N = int32_t (SPI_Read_32(ADDR_NIRMS));
-	
 }
 
 void ADE9000Class:: ReadFundActivePowerRegs(FundActivePowerRegs *Data)
@@ -294,7 +281,7 @@ void ADE9000Class:: ReadVoltageTHDRegsnValues(VoltageTHDRegs *Data)
 {
 	uint32_t tempReg;
 	float tempValue;
-	
+
 	tempReg=int32_t (SPI_Read_32(ADDR_AVTHD)); //Read THD register
 	Data->VoltageTHDReg_A = tempReg;
 	tempValue=(float)tempReg*100/(float)134217728; //Calculate THD in %
@@ -313,7 +300,7 @@ void ADE9000Class:: ReadCurrentTHDRegsnValues(CurrentTHDRegs *Data)
 {
 	uint32_t tempReg;
 	float tempValue;	
-	
+
 	tempReg=int32_t (SPI_Read_32(ADDR_AITHD)); //Read THD register
 	Data->CurrentTHDReg_A = tempReg;
 	tempValue=(float)tempReg*100/(float)134217728; //Calculate THD in %	
@@ -332,7 +319,7 @@ void ADE9000Class:: ReadPowerFactorRegsnValues(PowerFactorRegs *Data)
 {
 	uint32_t tempReg;
 	float tempValue;	
-	
+
 	tempReg=int32_t (SPI_Read_32(ADDR_APF)); //Read PF register
 	Data->PowerFactorReg_A = tempReg;
 	tempValue=(float)tempReg/(float)134217728; //Calculate PF	
@@ -372,7 +359,7 @@ void ADE9000Class:: ReadAngleRegsnValues(AngleRegs *Data)
 	uint16_t temp;
 	float mulConstant;
 	float tempValue;
-	
+
 	temp=SPI_Read_16(ADDR_ACCMODE); //Read frequency setting register
 	if((temp&0x0100)>=0)
 		{
@@ -382,7 +369,7 @@ void ADE9000Class:: ReadAngleRegsnValues(AngleRegs *Data)
 		{
 			mulConstant=0.017578125; //multiplier constant for 50Hz system		
 		}
-	
+
 	tempReg=int16_t (SPI_Read_32(ADDR_ANGL_VA_VB)); //Read ANGLE register
 	Data->AngleReg_VA_VB=tempReg;
 	tempValue=tempReg*mulConstant;	//Calculate Angle in degrees					
@@ -426,7 +413,6 @@ Description: Starts a new acquisition cycle. Waits for constant time and returns
 Input:	Structure name
 Output: Register reading and temperature value in Degree Celsius
 */
-
 void ADE9000Class:: ReadTempRegnValue(TemperatureRegnValue *Data)
 {
 	uint32_t trim;
@@ -434,7 +420,7 @@ void ADE9000Class:: ReadTempRegnValue(TemperatureRegnValue *Data)
 	uint16_t offset;
 	uint16_t tempReg; 
 	float tempValue;
-	
+
 	SPI_Write_16(ADDR_TEMP_CFG,ADE9000_TEMP_CFG);//Start temperature acquisition cycle with settings in defined in ADE9000_TEMP_CFG
 	delay(2); //delay of 2ms. Increase delay if TEMP_TIME is changed
 
@@ -443,7 +429,7 @@ void ADE9000Class:: ReadTempRegnValue(TemperatureRegnValue *Data)
 	offset= ((trim>>16)&0xFFFF); //Extract 16 MSB
 	tempReg= SPI_Read_16(ADDR_TEMP_RSLT);	//Read Temperature result register
 	tempValue= (float)(offset>>5)-((float)tempReg*(float)gain/(float)65536); 
-	
+
 	Data->Temperature_Reg=tempReg;
 	Data->Temperature=tempValue;
 }
@@ -453,7 +439,6 @@ Description: Writes one byte of data to EEPROM
 Input: Data and EEPROM address
 Output:-
 */
-
 void ADE9000Class:: writeByteToEeprom(uint16_t dataAddress, uint8_t data)
 {
 	uint8_t temp;
@@ -470,8 +455,7 @@ void ADE9000Class:: writeByteToEeprom(uint16_t dataAddress, uint8_t data)
 Description: REads one byte of data from EEPROM
 Input: EEPROM address
 Output:- 8 bit data
-*/	
-
+*/
 uint8_t ADE9000Class:: ReadByteFromEeprom(uint16_t dataAddress)
 {
     uint8_t returndata;
@@ -482,12 +466,11 @@ uint8_t ADE9000Class:: ReadByteFromEeprom(uint16_t dataAddress)
     temp= (dataAddress & (0xFF));
     Wire.write(byte(temp)); // LSB
     Wire.endTransmission();
-    Wire.requestFrom(byte(ADE9000_EEPROM_ADDRESS),1);
+    Wire.requestFrom(byte(ADE9000_EEPROM_ADDRESS),(uint8_t)1);
     if (Wire.available())  
         {
           returndata = Wire.read();
         }
-    
 	return returndata;	
 }
 
@@ -496,7 +479,6 @@ Description: Writes 4 bytes into EEPROM in continuous locations
 Input: Data and EEPROM address
 Output:-
 */
-
 void ADE9000Class:: writeWordToEeprom(uint16_t address, uint32_t data)
 {
 	uint8_t temp;
@@ -529,7 +511,6 @@ Description: Reads 4 bytes stored in EEPROM
 Input: Starting EEPROM address
 Output:- 4 byte wide data
 */
-
 uint32_t ADE9000Class:: readWordFromEeprom(uint16_t address)
 {
 	uint32_t returndata;
@@ -550,8 +531,6 @@ uint32_t ADE9000Class:: readWordFromEeprom(uint16_t address)
 }
 
 long ADE9000Class:: twos_compliment(long bitreg32) {
-    if(bitreg32 > 2,147,483,647) return (~bitreg32) + 1;
+    if(bitreg32 > 2147483647) return (~bitreg32) + 1;
     else return bitreg32;
 }
-
-
