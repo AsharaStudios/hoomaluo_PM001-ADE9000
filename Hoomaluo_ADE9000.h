@@ -312,12 +312,6 @@ class ADE9000Class
 		void ReadTempRegnValue(TemperatureRegnValue *Data);
         long twos_compliment(long bitreg32);  //RETURNS THE APPROPRIATE INTEGER FOR TWOS COMPLIMENT CONVERSION
 
-		// EEPROM Functions
-		void writeByteToEeprom(uint16_t dataAddress, uint8_t data);	
-		uint8_t ReadByteFromEeprom(uint16_t dataAddress);
-		void writeWordToEeprom(uint16_t address, uint32_t data);
-		uint32_t readWordFromEeprom(uint16_t address);
-
 	private:
 		uint8_t  _chipSelect_Pin;
 };
