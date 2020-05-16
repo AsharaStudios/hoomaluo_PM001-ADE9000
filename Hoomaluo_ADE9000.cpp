@@ -496,14 +496,15 @@ void ADE9000Class:: writeWordToEeprom(uint16_t address, uint32_t data)
 	writeByteToEeprom(address+3,temp);
 	delay(10);
 	returnedValue = readWordFromEeprom(address);
-	if(returnedValue!=data)
-    {
-      Serial.println("Write Not Successful"); //Check if data write is successful
-	  Serial.println("Address: ");
-	  Serial.print(address);
-	  Serial.println("Data: ");
-	  Serial.print(data,HEX);
-    }	
+
+	Serial.print("[EEPROM] Addr:");
+	Serial.print(address);
+	Serial.print(" - write:0x");
+	Serial.print(data,HEX);
+	Serial.print(" - read:0x");
+	Serial.print(returnedValue,HEX);
+	Serial.print(" - status:");
+	Serial.println((returnedValue==data)?"OK":"ERROR");
 }
 
 /* 
@@ -514,19 +515,17 @@ Output:- 4 byte wide data
 uint32_t ADE9000Class:: readWordFromEeprom(uint16_t address)
 {
 	uint32_t returndata;
-	returndata=0;
-	uint8_t temp;
-	temp = ReadByteFromEeprom(address);
-	returndata = temp;    //LSB
+	uint8_t temp = ReadByteFromEeprom(address);
+	returndata = (uint32_t)temp;    //LSB
 	delay(10);
 	temp = ReadByteFromEeprom(address+1);
-	returndata |= (temp<<8);
+	returndata |= ((uint32_t)temp<<8);
 	delay(10);
 	temp = ReadByteFromEeprom(address+2);
-	returndata |= (temp<<16);
+	returndata |= ((uint32_t)temp<<16);
 	delay(10);
 	temp = ReadByteFromEeprom(address+3);
-	returndata |= (temp<<24);  //MSB  
+	returndata |= ((uint32_t)temp<<24);  //MSB
 	return returndata;	
 }
 
